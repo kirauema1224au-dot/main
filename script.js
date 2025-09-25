@@ -1,6 +1,5 @@
 // Start of Selection
 document.getElementById("btn").addEventListener("click", () => {
-    // ゲームエリアの作成
     const gameArea = document.createElement("div");
     gameArea.style.position = "fixed";
     gameArea.style.top = "0";
@@ -11,7 +10,6 @@ document.getElementById("btn").addEventListener("click", () => {
     gameArea.style.zIndex = "9999";
     document.body.appendChild(gameArea);
 
-    // プレイヤーの作成
     const player = document.createElement("div");
     player.style.position = "absolute";
     player.style.bottom = "20px";
@@ -23,90 +21,102 @@ document.getElementById("btn").addEventListener("click", () => {
     player.style.borderRadius = "50%";
     gameArea.appendChild(player);
 
-    // 弾を発射する関数
-    const shoot = () => {
-        const bullet = document.createElement("div");
-        bullet.className = "bullet"; // 当たり判定用にクラスを追加
-        bullet.style.position = "absolute";
-        bullet.style.bottom = "70px";
-        // プレイヤーの現在の位置から発射
-        bullet.style.left = player.style.left;
-        bullet.style.transform = player.style.transform;
-        bullet.style.width = "10px";
-        bullet.style.height = "20px";
-        bullet.style.background = "#fff";
-        gameArea.appendChild(bullet);
+    let playerX = 50; // プレイヤーの初期X位置（パーセンテージ）
+    const playerSpeed = 2; // プレイヤーの移動速度
 
-        // 弾を動かす処理
-        const moveBullet = setInterval(() => {
-            const bulletBottom = parseInt(bullet.style.bottom);
-            if (bulletBottom > window.innerHeight) {
-                clearInterval(moveBullet);
-                bullet.remove();
-            } else {
-                bullet.style.bottom = bulletBottom + 10 + "px";
+    const movePlayer = (e) => {
+        if (e.key === 'a' || e.key === 'A') {
+            playerX -= playerSpeed;
+        } else if (e.key === 'd' || e.key === 'D') {
+            playerX += playerSpeed;
+        }
 
-                // 当たり判定
-                const enemies = document.querySelectorAll(".enemy");
-                const bulletRect = bullet.getBoundingClientRect();
-                enemies.forEach(enemy => {
-                    const enemyRect = enemy.getBoundingClientRect();
-                    // 矩形が重なっているかチェック
-                    if (bulletRect.left < enemyRect.right &&
-                        bulletRect.right > enemyRect.left &&
-                        bulletRect.top < enemyRect.bottom &&
-                        bulletRect.bottom > enemyRect.top) {
-                        
-                        // 衝突したら敵と弾を消す
-                        enemy.remove();
-                        bullet.remove();
-                        clearInterval(moveBullet); // 弾の動きを止める
-                    }
-                });
-            }
-        }, 16); // 約60fps
+        // プレイヤーが画面外に出ないようにする
+        if (playerX < 0) playerX = 0;
+        if (playerX > 100) playerX = 100;
+
+        player.style.left = playerX + '%';
     };
 
-    // 敵を作成する関数
+    document.addEventListener('keydown', movePlayer);
+
+    const gameIntervals = []; // ゲーム内のインターバルを管理する配列
+
     const createEnemy = () => {
         const enemy = document.createElement("div");
-        enemy.className = "enemy"; // 当たり判定用にクラスを追加
+        enemy.classList.add("enemy"); // 敵を識別するためのクラス
         enemy.style.position = "absolute";
-        enemy.style.top = "-50px"; // 画面外からスタート
-        enemy.style.left = Math.random() * (window.innerWidth - 50) + "px"; // 横位置をランダムに
+        enemy.style.top = "-50px"; // 画面上部外からスタート
+        enemy.style.left = Math.random() * 100 + "%"; // ランダムな横位置
+        enemy.style.transform = "translateX(-50%)";
         enemy.style.width = "50px";
         enemy.style.height = "50px";
-        enemy.style.background = "linear-gradient(135deg, #f44336, #e91e63)";
+        enemy.style.background = "radial-gradient(circle, #f44336, #d32f2f)";
         enemy.style.borderRadius = "10px";
         gameArea.appendChild(enemy);
 
-        // 敵を動かす処理
         const moveEnemy = setInterval(() => {
             const enemyTop = parseInt(enemy.style.top);
             if (enemyTop > window.innerHeight) {
                 clearInterval(moveEnemy);
                 enemy.remove();
             } else {
-                enemy.style.top = enemyTop + 3 + "px";
+                enemy.style.top = enemyTop + 2 + "px";
             }
         }, 16);
+        gameIntervals.push(moveEnemy);
     };
 
     // 1.5秒ごとに敵を生成
-    const enemyInterval = setInterval(createEnemy, 1500);
+    const enemyCreationInterval = setInterval(createEnemy, 1500);
+    gameIntervals.push(enemyCreationInterval);
 
-    // クリックで弾を発射
-    gameArea.addEventListener("click", shoot);
-
-    // ゲームを終了する関数
-    const closeGame = () => {
-        // 生成ループを停止
-        clearInterval(enemyInterval);
-        // ゲームエリア内の全ての要素（弾、敵の移動インターバル）を止める必要があるが、
-        // 簡単のため、ここではエリアごと削除する
-        gameArea.remove();
+    const checkCollision = (bullet, bulletInterval) => {
+        document.querySelectorAll('.enemy').forEach(enemy => {
+            const rect1 = bullet.getBoundingClientRect();
+            const rect2 = enemy.getBoundingClientRect();
+            if (!(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom)) {
+                enemy.remove();
+                bullet.remove();
+                clearInterval(bulletInterval);
+            }
+        });
     };
 
-    // ゲームを30秒後に終了
-    setTimeout(closeGame, 30000);
+    const shoot = () => {
+        const bullet = document.createElement("div");
+        bullet.style.position = "absolute";
+        bullet.style.bottom = "70px";
+        bullet.style.left = playerX + "%";
+        bullet.style.transform = "translateX(-50%)";
+        bullet.style.width = "10px";
+        bullet.style.height = "20px";
+        bullet.style.background = "#fff";
+        gameArea.appendChild(bullet);
+
+        const moveBullet = setInterval(() => {
+            const bulletTop = parseInt(bullet.style.bottom);
+            if (bulletTop > window.innerHeight) {
+                clearInterval(moveBullet);
+                if (bullet.parentNode) { // 衝突後、すでに削除されていないか確認
+                    bullet.remove();
+                }
+            } else {
+                bullet.style.bottom = bulletTop + 5 + "px";
+                checkCollision(bullet, moveBullet); // 弾が動くたびに衝突判定
+            }
+        }, 16);
+        gameIntervals.push(moveBullet);
+    };
+
+    gameArea.addEventListener("click", shoot);
+
+    const closeGame = () => {
+        gameArea.remove();
+        document.removeEventListener('keydown', movePlayer); // イベントリスナーを削除
+        // すべてのインターバルをクリア
+        gameIntervals.forEach(interval => clearInterval(interval));
+    };
+
+    setTimeout(closeGame, 10000); // ゲームを10秒後に終了
 });
