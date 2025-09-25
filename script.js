@@ -1,5 +1,12 @@
-// Start of Selection
 document.getElementById("btn").addEventListener("click", () => {
+    // ゲーム開始時にボタンとタイトルを非表示にする
+    document.getElementById("btn").style.display = "none";
+    document.querySelector("h1").style.display = "none";
+
+    startGame();
+});
+
+function startGame() {
     const gameArea = document.createElement("div");
     gameArea.style.position = "fixed";
     gameArea.style.top = "0";
@@ -9,6 +16,17 @@ document.getElementById("btn").addEventListener("click", () => {
     gameArea.style.background = "rgba(0, 0, 0, 0.8)";
     gameArea.style.zIndex = "9999";
     document.body.appendChild(gameArea);
+
+    let score = 0;
+    let enemySpeed = 2; // 敵の初期速度
+    const scoreDisplay = document.createElement("div");
+    scoreDisplay.style.position = "absolute";
+    scoreDisplay.style.top = "10px";
+    scoreDisplay.style.left = "10px";
+    scoreDisplay.style.color = "white";
+    scoreDisplay.style.fontSize = "24px";
+    scoreDisplay.textContent = "Score: 0";
+    gameArea.appendChild(scoreDisplay);
 
     const player = document.createElement("div");
     player.style.position = "absolute";
@@ -61,26 +79,94 @@ document.getElementById("btn").addEventListener("click", () => {
                 clearInterval(moveEnemy);
                 enemy.remove();
             } else {
-                enemy.style.top = enemyTop + 2 + "px";
+                enemy.style.top = enemyTop + enemySpeed + "px"; // 敵の速度を適用
             }
         }, 16);
         gameIntervals.push(moveEnemy);
     };
 
     // 1.5秒ごとに敵を生成
-    const enemyCreationInterval = setInterval(createEnemy, 1500);
+    let enemyCreationInterval = setInterval(createEnemy, 1500);
     gameIntervals.push(enemyCreationInterval);
 
     const checkCollision = (bullet, bulletInterval) => {
+        // 弾が存在しない場合は処理を中断
+        if (!bullet.parentNode) {
+            return;
+        }
         document.querySelectorAll('.enemy').forEach(enemy => {
+            // 敵か弾がすでにシーンから削除されている場合は判定しない
+            if (!enemy.parentNode || !bullet.parentNode) {
+                return;
+            }
+
             const rect1 = bullet.getBoundingClientRect();
             const rect2 = enemy.getBoundingClientRect();
             if (!(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom)) {
                 enemy.remove();
                 bullet.remove();
                 clearInterval(bulletInterval);
+                score++;
+                scoreDisplay.textContent = "Score: " + score;
+                // 5点ごとに敵を強化
+                if (score % 5 === 0) {
+                    enemySpeed += 0.5;
+                }
             }
         });
+    };
+
+    const gameOver = () => {
+        // すべてのインターバルをクリアしてゲームの動きを止める
+        gameIntervals.forEach(interval => clearInterval(interval));
+        gameIntervals.length = 0; // 配列を空にする
+
+        // イベントリスナーを削除
+        document.removeEventListener('keydown', movePlayer);
+        gameArea.removeEventListener("click", shoot);
+
+        // ゲームオーバー画面を作成
+        const gameOverScreen = document.createElement("div");
+        gameOverScreen.style.position = "absolute";
+        gameOverScreen.style.top = "50%";
+        gameOverScreen.style.left = "50%";
+        gameOverScreen.style.transform = "translate(-50%, -50%)";
+        gameOverScreen.style.color = "white";
+        gameOverScreen.style.textAlign = "center";
+        gameOverScreen.style.zIndex = "10000";
+
+        const gameOverText = document.createElement("h2");
+        gameOverText.textContent = "GAME OVER";
+        gameOverText.style.fontSize = "48px";
+        gameOverText.style.margin = "0";
+        gameOverScreen.appendChild(gameOverText);
+
+        const finalScoreText = document.createElement("p");
+        finalScoreText.textContent = "Final Score: " + score;
+        finalScoreText.style.fontSize = "24px";
+        gameOverScreen.appendChild(finalScoreText);
+
+        const retryButton = document.createElement("button");
+        retryButton.textContent = "リトライ";
+        // index.htmlのボタンのスタイルを参考に適用
+        Object.assign(retryButton.style, {
+            background: "linear-gradient(90deg, #26c6da 0%, #ab47bc 100%)",
+            color: "#fff",
+            border: "none",
+            borderRadius: "30px",
+            padding: "18px 48px",
+            fontSize: "1.3rem",
+            fontWeight: "bold",
+            cursor: "pointer",
+            marginTop: "20px"
+        });
+        retryButton.onclick = () => {
+            gameArea.remove();
+            startGame(); // ゲームを再開
+        };
+        gameOverScreen.appendChild(retryButton);
+
+        gameArea.appendChild(gameOverScreen);
     };
 
     const shoot = () => {
@@ -111,12 +197,19 @@ document.getElementById("btn").addEventListener("click", () => {
 
     gameArea.addEventListener("click", shoot);
 
-    const closeGame = () => {
-        gameArea.remove();
-        document.removeEventListener('keydown', movePlayer); // イベントリスナーを削除
-        // すべてのインターバルをクリア
-        gameIntervals.forEach(interval => clearInterval(interval));
+    // プレイヤーと敵の衝突判定
+    const checkPlayerCollision = () => {
+        const playerRect = player.getBoundingClientRect();
+        document.querySelectorAll('.enemy').forEach(enemy => {
+            const enemyRect = enemy.getBoundingClientRect();
+            // 衝突判定
+            if (!(playerRect.right < enemyRect.left || playerRect.left > enemyRect.right || playerRect.bottom < enemyRect.top || playerRect.top > enemyRect.bottom)) {
+                gameOver(); // 衝突したらゲームオーバー
+            }
+        });
     };
 
-    setTimeout(closeGame, 100000000000); // ゲームを10秒後に終了
-});
+    // 100msごとにプレイヤーと敵の衝突をチェック
+    const playerCollisionInterval = setInterval(checkPlayerCollision, 100);
+    gameIntervals.push(playerCollisionInterval);
+}
