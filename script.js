@@ -83,6 +83,14 @@ function startGame() {
             }
         }, 16);
         gameIntervals.push(moveEnemy);
+
+        // スコアが20以上なら、この敵は攻撃する
+        if (score >= 20) {
+            const attackInterval = setInterval(() => createEnemyBullet(enemy), 1800);
+            gameIntervals.push(attackInterval);
+            // 攻撃していることを示す目印（データ属性）
+            enemy.dataset.isAttacking = "true";
+        }
     };
 
     const createEnemyBullet = (enemy) => {
@@ -139,10 +147,9 @@ function startGame() {
                 if (score % 5 === 0) {
                     enemySpeed += 0.5;
                 }
-                // スコアが20に達したら、新しく生成される敵が攻撃を開始
-                if (score >= 20) {
+                // スコアがちょうど20になった瞬間に、画面上の既存の敵も攻撃を開始させる
+                if (score === 20) {
                     document.querySelectorAll('.enemy').forEach(existingEnemy => {
-                        // 攻撃タイマーがまだセットされていない敵にセットする
                         if (!existingEnemy.dataset.isAttacking) {
                             const attackInterval = setInterval(() => createEnemyBullet(existingEnemy), 1800);
                             gameIntervals.push(attackInterval);
