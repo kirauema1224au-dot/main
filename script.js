@@ -1,4 +1,4 @@
 document.getElementById("btn").addEventListener("click", () => {
-    alert("GitHub実習スタート！");
+    alert("Git実習スタート！");
 });
   
