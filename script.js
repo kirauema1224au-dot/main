@@ -85,6 +85,33 @@ function startGame() {
         gameIntervals.push(moveEnemy);
     };
 
+    const createEnemyBullet = (enemy) => {
+        if (!enemy.parentNode) return; // 敵がすでに倒されていたら何もしない
+
+        const enemyRect = enemy.getBoundingClientRect();
+        const bullet = document.createElement("div");
+        bullet.classList.add("enemy-bullet"); // 敵の弾を識別するクラス
+        bullet.style.position = "absolute";
+        bullet.style.top = enemyRect.bottom + "px";
+        bullet.style.left = (enemyRect.left + enemyRect.width / 2 - 3) + "px"; // 敵の中央から
+        bullet.style.width = "6px";
+        bullet.style.height = "12px";
+        bullet.style.background = "#ffeb3b"; // 黄色い弾
+        bullet.style.borderRadius = "3px";
+        gameArea.appendChild(bullet);
+
+        const moveBullet = setInterval(() => {
+            const bulletTop = parseInt(bullet.style.top);
+            if (bulletTop > window.innerHeight) {
+                clearInterval(moveBullet);
+                bullet.remove();
+            } else {
+                bullet.style.top = (bulletTop + 4) + "px"; // 弾の落下速度
+            }
+        }, 16);
+        gameIntervals.push(moveBullet);
+    };
+
     // 1.5秒ごとに敵を生成
     let enemyCreationInterval = setInterval(createEnemy, 1500);
     gameIntervals.push(enemyCreationInterval);
@@ -111,6 +138,17 @@ function startGame() {
                 // 5点ごとに敵を強化
                 if (score % 5 === 0) {
                     enemySpeed += 0.5;
+                }
+                // スコアが20に達したら、新しく生成される敵が攻撃を開始
+                if (score >= 20) {
+                    document.querySelectorAll('.enemy').forEach(existingEnemy => {
+                        // 攻撃タイマーがまだセットされていない敵にセットする
+                        if (!existingEnemy.dataset.isAttacking) {
+                            const attackInterval = setInterval(() => createEnemyBullet(existingEnemy), 1800);
+                            gameIntervals.push(attackInterval);
+                            existingEnemy.dataset.isAttacking = "true";
+                        }
+                    });
                 }
             }
         });
@@ -200,10 +238,18 @@ function startGame() {
     // プレイヤーと敵の衝突判定
     const checkPlayerCollision = () => {
         const playerRect = player.getBoundingClientRect();
+        // 敵本体との衝突
         document.querySelectorAll('.enemy').forEach(enemy => {
             const enemyRect = enemy.getBoundingClientRect();
             // 衝突判定
             if (!(playerRect.right < enemyRect.left || playerRect.left > enemyRect.right || playerRect.bottom < enemyRect.top || playerRect.top > enemyRect.bottom)) {
+                gameOver(); // 衝突したらゲームオーバー
+            }
+        });
+        // 敵の弾との衝突
+        document.querySelectorAll('.enemy-bullet').forEach(bullet => {
+            const bulletRect = bullet.getBoundingClientRect();
+            if (!(playerRect.right < bulletRect.left || playerRect.left > bulletRect.right || playerRect.bottom < bulletRect.top || playerRect.top > bulletRect.bottom)) {
                 gameOver(); // 衝突したらゲームオーバー
             }
         });
