@@ -4,10 +4,47 @@
   <meta charset="utf-8">
   <title>Hello GitHub</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: linear-gradient(120deg, #f0f4c3 0%, #b2dfdb 100%);
+      font-family: 'Segoe UI', 'ヒラギノ角ゴ ProN', 'Meiryo', sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    h1 {
+      color: #37474f;
+      font-size: 3rem;
+      margin-bottom: 30px;
+      letter-spacing: 2px;
+      text-shadow: 1px 2px 8px #b2dfdb;
+    }
+    #btn {
+      background: linear-gradient(90deg, #26c6da 0%, #ab47bc 100%);
+      color: #fff;
+      border: none;
+      border-radius: 30px;
+      padding: 18px 48px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(38,198,218,0.2);
+      transition: background 0.3s, transform 0.2s;
+    }
+    #btn:hover {
+      background: linear-gradient(90deg, #ab47bc 0%, #26c6da 100%);
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 8px 24px rgba(171,71,188,0.18);
+    }
+  </style>
 </head>
 <body>
-  <h1>Hello Git!</h1>
-  <button id="btn">Click me</button>
+  <h1>🚀 Hello Git!</h1>
+  <button id="btn">Git実習スタート！</button>
   <script src="script.js"></script>
 </body>
 </html>
