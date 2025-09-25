@@ -118,5 +118,5 @@ document.getElementById("btn").addEventListener("click", () => {
         gameIntervals.forEach(interval => clearInterval(interval));
     };
 
-    setTimeout(closeGame, 10000); // ゲームを10秒後に終了
+    setTimeout(closeGame, 100000000000); // ゲームを10秒後に終了
 });
